@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practice Recitation - V2Cap</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .recitation-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .recitation-box {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .arabic-text {
+            font-size: 2.5rem;
+            line-height: 3;
+            direction: rtl;
+            font-family: 'Traditional Arabic', 'Amiri', serif;
+            color: var(--primary-color);
+            margin: 2rem 0;
+        }
+        .controls {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .status.listening { background-color: #e3f2fd; color: #1976d2; }
+        .status.success { background-color: #e8f5e9; color: #2e7d32; }
+        .status.error { background-color: #ffebee; color: #c62828; }
+        select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="/home" class="logo">V2Cap</a>
+            <ul class="nav-links">
+                <a href="/home">Dashboard</a>
+                <a href="/quran">Quran</a>
+                <a href="/recitation">Recitation</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="recitation-container">
+        <div class="recitation-box">
+            <h2>Practice Quran Recitation</h2>
+            
+            <select id="surahSelect">
+                <option value="1">Al-Fatihah (1)</option>
+                <option value="103">Al-Asr (103)</option>
+                <option value="106">Quraysh (106)</option>
+                <option value="107">Al-Ma'un (107)</option>
+                <option value="108">Al-Kawthar (108)</option>
+                <option value="112">Al-Ikhlas (112)</option>
+                <option value="113">Al-Falaq (113)</option>
+                <option value="114">An-Nas (114)</option>
+            </select>
+            
+            
+            <select id="verseSelect">
+                <option value="1">Verse 1</option>
+            </select>
+
+            <div id="arabicText" class="arabic-text"></div>
+
+            <div class="controls">
+                <button id="startBtn" class="btn btn-primary">Start</button>
+                <button id="stopBtn" class="btn btn-secondary" disabled>Stop</button>
+            </div>
+
+            <div id="status" class="status">Ready</div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.href = '/login';
+        }
+
+        //sample surahs
+        var surahs = {
+    1: [
+        "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+        "الرَّحْمَٰنِ الرَّحِيمِ",
+        "مَالِكِ يَوْمِ الدِّينِ",
+        "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ",
+        "اهْدِنَا الصِّرَاطَ الْمُسْتَقِيمَ",
+        "صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ"
+    ],
+    103: [
+        "وَالْعَصْرِ",
+        "إِنَّ الْإِنسَانَ لَفِي خُسْرٍ",
+        "إِلَّا الَّذِينَ آمَنُوا وَعَمِلُوا الصَّالِحَاتِ وَتَوَاصَوْا بِالْحَقِّ وَتَوَاصَوْا بِالصَّبْرِ"
+    ],
+    106: [
+        "لِإِيلَافِ قُرَيْشٍ",
+        "إِيلَافِهِمْ رِحْلَةَ الشِّتَاءِ وَالصَّيْفِ",
+        "فَلْيَعْبُدُوا رَبَّ هَٰذَا الْبَيْتِ",
+        "الَّذِي أَطْعَمَهُم مِّن جُوعٍ وَآمَنَهُم مِّنْ خَوْفٍ"
+    ],
+    107: [
+        "أَرَأَيْتَ الَّذِي يُكَذِّبُ بِالدِّينِ",
+        "فَذَٰلِكَ الَّذِي يَدُعُّ الْيَتِيمَ",
+        "وَلَا يَحُضُّ عَلَىٰ طَعَامِ الْمِسْكِينِ",
+        "فَوَيْلٌ لِّلْمُصَلِّينَ",
+        "الَّذِينَ هُمْ عَن صَلَاتِهِمْ سَاهُونَ",
+        "الَّذِينَ هُمْ يُرَاءُونَ",
+        "وَيَمْنَعُونَ الْمَاعُونَ"
+    ],
+    108: [
+        "إِنَّا أَعْطَيْنَاكَ الْكَوْثَرَ",
+        "فَصَلِّ لِرَبِّكَ وَانْحَرْ",
+        "إِنَّ شَانِئَكَ هُوَ الْأَبْتَرُ"
+    ],
+    112: [
+        "قُلْ هُوَ اللَّهُ أَحَدٌ",
+        "اللَّهُ الصَّمَدُ",
+        "لَمْ يَلِدْ وَلَمْ يُولَدْ",
+        "وَلَمْ يَكُن لَّهُ كُفُوًا أَحَدٌ"
+    ],
+    113: [
+        "قُلْ أَعُوذُ بِرَبِّ الْفَلَقِ",
+        "مِن شَرِّ مَا خَلَقَ",
+        "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ",
+        "وَمِن شَرِّ النَّفَّاثَاتِ فِي الْعُقَدِ",
+        "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ"
+    ],
+    114: [
+        "قُلْ أَعُوذُ بِرَبِّ النَّاسِ",
+        "مَلِكِ النَّاسِ",
+        "إِلَٰهِ النَّاسِ",
+        "مِن شَرِّ الْوَسْوَاسِ الْخَنَّاسِ",
+        "الَّذِي يُوَسْوِسُ فِي صُدُورِ النَّاسِ",
+        "مِنَ الْجِنَّةِ وَالنَّاسِ"
+    ]
+};
+
+        var currentSurah = 1;
+        var currentVerse = 1;
+        var recognition = null;
+
+        // setup speech thing
+        function setupSpeech() {
+            if (!window.webkitSpeechRecognition && !window.SpeechRecognition) {
+                document.getElementById('status').textContent = 'Not supported';
+                return false;
+            } //this is already pre-trained neural network that converts arabic to english real-time
+
+            var SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.lang = 'ar-SA';
+            recognition.continuous = false;
+
+            recognition.onstart = function() {
+                document.getElementById('status').textContent = 'Listening...';
+                document.getElementById('status').className = 'status listening';
+                document.getElementById('startBtn').disabled = true;
+            };
+
+            recognition.onresult = function(event) {
+                var said = event.results[0][0].transcript; //actual verse
+                var expected = surahs[currentSurah][currentVerse - 1];
+                
+                // this fucntion was created through AI(Arabic enunciation 
+                // is very different so you have to use remove certain diatrics which are signs)
+                // for the letters to make it consistent when to hear 
+                function normalize(text) {
+                    return text
+                        .replace(/[\u064B-\u065F]/g, '') // remove diacritics
+                        .replace(/[ٱأإآ]/g, 'ا') // normalize alif
+                        .replace(/[ىي]/g, 'ي') // normalize ya
+                        .replace(/ة/g, 'ه') // ta marbuta to ha
+                        .replace(/\s+/g, ' ')
+                        .trim()
+                        .toLowerCase();
+                }
+                
+                //Check if the word is similar 
+                function wordSimilarity(word1, word2) {
+                    if (word1 == word2) return 1.0;
+                    
+                    var maxLen = Math.max(word1.length, word2.length);
+                    var matches = 0;
+                    
+                    for (var i = 0; i < Math.min(word1.length, word2.length); i++) {
+                        if (word1[i] == word2[i]) {
+                            matches++;
+                        }
+                    }
+                    
+                    return matches / maxLen;
+                }
+                
+                var expectedNorm = normalize(expected);
+                var saidNorm = normalize(said);  
+                var expectedWords = expectedNorm.split(' ');
+                var saidWords = saidNorm.split(' ');
+                var correctWords = 0;
+                
+                for (var i = 0; i < expectedWords.length; i++) {
+                    for (var j = 0; j < saidWords.length; j++) {
+                        var similarity = wordSimilarity(expectedWords[i], saidWords[j]);
+                        if (similarity > 0.7) { // 70% similar = good enough
+                            correctWords++;
+                            break;
+                        }
+                    }
+                }
+                
+                var percentage = Math.round((correctWords / expectedWords.length) * 100);
+                
+                if (percentage > 70) {
+                    document.getElementById('status').textContent = 'Good! Score: ' + percentage + '%';
+                    document.getElementById('status').className = 'status success';
+                } else {
+                    document.getElementById('status').textContent = 'Try again. Score: ' + percentage + '%';
+                    document.getElementById('status').className = 'status error';
+                }
+                
+                resetButtons();
+            };
+            recognition.onend = function() {
+                resetButtons();
+            };
+
+            return true;
+        }
+
+        // same thign but change from one surah to the other
+        function updateVerses() {
+            currentSurah = parseInt(document.getElementById('surahSelect').value);
+            var verseSelect = document.getElementById('verseSelect');
+            var verses = surahs[currentSurah];
+            
+            verseSelect.innerHTML = '';
+            
+            for (var i = 0; i < verses.length; i++) {
+                var option = document.createElement('option');
+                option.value = i + 1;
+                option.textContent = 'Verse ' + (i + 1);
+                verseSelect.appendChild(option);
+            }
+            
+            currentVerse = 1;
+            loadVerse();
+        }
+
+        // show the arabic text
+        function loadVerse() {
+            currentSurah = parseInt(document.getElementById('surahSelect').value);
+            currentVerse = parseInt(document.getElementById('verseSelect').value);
+            
+            var text = surahs[currentSurah][currentVerse - 1];
+            document.getElementById('arabicText').textContent = text;
+            
+            document.getElementById('status').textContent = 'Ready';
+            document.getElementById('status').className = 'status';
+        }
+
+        function start() {
+            if (recognition) {
+                recognition.start();
+            }
+        }
+
+        function resetButtons() {
+            document.getElementById('startBtn').disabled = false;
+        }
+
+        document.getElementById('surahSelect').addEventListener('change', updateVerses);
+        document.getElementById('verseSelect').addEventListener('change', loadVerse);
+        document.getElementById('startBtn').addEventListener('click', start);
+        document.getElementById('stopBtn').addEventListener('click', stop);
+
+        if (setupSpeech()) {
+            updateVerses();
+        }
+    </script>
+</body>
+</html>

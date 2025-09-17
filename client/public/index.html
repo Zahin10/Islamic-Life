@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V2Cap - Muslim Spiritual Development</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <!-- Landing Page (index.html) -->
+    <nav>
+        <div class="nav-container">
+            <a href="/" class="logo">Islamic Life</a>
+            <ul class="nav-links">
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Welcome to Islamic Life</h1>
+        <p>Your Journey to Spiritual Excellence Begins Here</p>
+        <p>Enhance your connection with the Quran through modern technology</p>
+        <div class="cta-buttons">
+            <a href="/register" class="btn btn-primary">Get Started</a>
+            <a href="/login" class="btn btn-secondary">Sign In</a>
+        </div>
+    </section>
+
+    <section class="features">
+        <h2>Features to Enhance Your Spiritual Journey</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📖</div>
+                <h3>Quran Reading</h3>
+                <p>Access the complete Quran with translations and tafsir to deepen your understanding</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎙️</div>
+                <h3>Voice Recitation</h3>
+                <p>Practice your recitation with AI-powered feedback to improve your pronunciation</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Progress Tracking</h3>
+                <p>Monitor your spiritual growth and maintain consistency in your daily practices</p>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const token = localStorage.getItem('token');
+        if (token) {
+            document.querySelector('.nav-links').innerHTML = `
+                <a href="/home">Dashboard</a>
+                <a href="#" onclick="logout()">Logout</a>
+            `;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

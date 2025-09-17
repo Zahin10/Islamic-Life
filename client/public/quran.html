@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qur'an Reader</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .quran-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .quran-controls {
+            background-color: var(--white);
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .quran-controls select {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .quran-content {
+            background-color: var(--white);
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .surah-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--accent-color);
+        }
+
+        .surah-header h2 {
+            color: var(--primary-color);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .surah-info {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .ayah-container {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            transition: background-color 0.3s;
+        }
+
+        .ayah-container:hover {
+            background-color: #f0f0f0;
+        }
+
+        .ayah-arabic {
+            font-size: 1.8rem;
+            line-height: 2.5;
+            text-align: right;
+            direction: rtl;
+            font-family: 'Traditional Arabic', 'Amiri', serif;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .ayah-translation {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #555;
+        }
+
+        .ayah-number {
+            display: inline-block;
+            background-color: var(--accent-color);
+            color: var(--primary-color);
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            border-radius: 50%;
+            font-weight: bold;
+            margin-right: 10px;
+            font-size: 0.9rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--primary-color);
+        }
+
+        .bismillah {
+            text-align: center;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 2rem;
+            font-family: 'Traditional Arabic', 'Amiri', serif;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="/home" class="logo">V2Cap</a>
+            <ul class="nav-links">
+                <a href="/home">Dashboard</a>
+                <a href="/quran">Quran</a>
+                <a href="/recitation">Recitation</a>
+                <a href="#" onclick="logout()">Logout</a>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="quran-container">
+        <div class="quran-controls">
+            <select id="surahSelect">
+                <option value="">Select Surah</option>
+            </select>
+            
+            <select id="translationSelect">
+                <option value="en-ahmedali">Ahmed Ali</option>
+            </select>
+        </div>
+
+        <div id="quranContent" class="quran-content">
+            <div class="loading">Select a Surah to begin reading...</div>
+        </div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script>
+        if (!localStorage.getItem('token')) {
+            window.location.href = '/login';
+        }
+
+        const token = localStorage.getItem('token');
+
+        async function loadSurahs() {
+                const response = await fetch('/api/quran/surahs', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+            
+                const surahs = await response.json();
+                const select = document.getElementById('surahSelect');
+                
+                surahs.forEach((surah, index) => {
+                    const option = document.createElement('option');
+                    option.value = index + 1;
+                    option.textContent = `${index + 1}. ${surah.name} (${surah.englishName})`;
+                    select.appendChild(option);
+                });
+         
+        }
+
+        async function loadSurah(surahNumber) {
+            document.getElementById('quranContent').innerHTML = '<div class="loading">Loading Surah...</div>';
+            
+            try {
+                const translation = document.getElementById('translationSelect').value;
+                const response = await fetch(`/api/quran/surah/${surahNumber}?translation=${translation}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    //document.getElementById('quranContent').innerHTML = '<div class="loading">Failed to load Surah</div>';
+                    return;
+                }
+                
+                const data = await response.json();
+                showSurah(data, surahNumber);
+            } catch (error) {
+                console.log('Error loading surah:', error);
+                //document.getElementById('quranContent').innerHTML = '<div class="loading">Failed to load Surah</div>';
+            }
+        }
+
+        function showSurah(data, surahNumber) {
+            let html = `
+                <div class="surah-header">
+                    <h2>${data.arabic.surahName} - ${data.translation.surahName}</h2>
+                    <div class="surah-info">Surah ${surahNumber} • ${data.arabic.verses.length} Ayahs</div>
+                </div>
+            `;
+            
+            //exception
+            if (surahNumber != 9) {
+                html += '<div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>';
+            }
+            
+            // verses
+            data.arabic.verses.forEach((ayah, index) => {
+                html += `
+                    <div class="ayah-container">
+                        <div class="ayah-arabic">
+                            ${ayah} <span class="ayah-number">${index + 1}</span>
+                        </div>
+                        <div class="ayah-translation">
+                            <span class="ayah-number">${index + 1}</span>
+                            ${data.translation.verses[index]}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('quranContent').innerHTML = html;
+        }
+
+        document.getElementById('surahSelect').addEventListener('change', (e) => {
+            if (e.target.value) {
+                loadSurah(e.target.value);
+            }
+        });
+
+        document.getElementById('translationSelect').addEventListener('change', (e) => {
+            const currentSurahNumber = document.getElementById('surahSelect').value;
+            if (currentSurahNumber) {
+                loadSurah(currentSurahNumber);
+            }
+        });
+
+        loadSurahs();
+    </script>
+</body>
+</html>
