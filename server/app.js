@@ -41,4 +41,21 @@ app.get('/recitation', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/public/recitation.html'));
 });
 
+// Catch-all route for unmatched requests - ADD THIS
+app.get('*', (req, res) => {
+  res.status(404).send(`
+    <h1>Page Not Found</h1>
+    <p>The page you're looking for doesn't exist.</p>
+    <p>Available pages:</p>
+    <ul>
+      <li><a href="/">Home</a></li>
+      <li><a href="/login">Login</a></li>
+      <li><a href="/register">Register</a></li>
+      <li><a href="/home">Dashboard</a></li>
+      <li><a href="/quran">Quran</a></li>
+      <li><a href="/recitation">Recitation</a></li>
+    </ul>
+  `);
+});
+
 module.exports = app;
