@@ -41,7 +41,6 @@ app.get('/recitation', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/public/recitation.html'));
 });
 
-// Catch-all route for unmatched requests - ADD THIS
 app.get('*', (req, res) => {
   res.status(404).send(`
     <h1>Page Not Found</h1>
