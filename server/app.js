@@ -17,8 +17,6 @@ app.use(express.static(path.join(__dirname, '../client/public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/quran', quranRoutes);
 
-
-
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../client/public/index.html'));
 });

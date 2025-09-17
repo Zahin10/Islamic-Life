@@ -1,7 +1,7 @@
 const app = require('./app');
 const pool = require('./config/database');
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
@@ -14,3 +14,6 @@ pool.query('SELECT NOW()', (err, res) => {
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+// Export for Vercel
+module.exports = app;
